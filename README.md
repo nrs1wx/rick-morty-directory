@@ -3,7 +3,7 @@
 A character directory built with React + Vite. Data comes from the public
 [Rick and Morty API](https://rickandmortyapi.com/documentation) (826 characters).
 
-**Live demo:** _paste your deployed link here_
+**Live demo:** https://rick-morty-directory.vercel.app/
 
 ## Features
 - List view (cards) and detail view (modal)
