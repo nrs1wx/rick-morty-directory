@@ -1,11 +1,17 @@
-export default function CharacterCard({ character, onSelect }) {
+import { Link, useLocation } from "react-router-dom";
+import CharacterImage from "./CharacterImage.jsx";
+
+export default function CharacterCard({ character }) {
+  const location = useLocation();
+
   return (
-    <button className="card" onClick={() => onSelect(character.id)}>
-      {character.image ? (
-        <img src={character.image} alt={character.name} loading="lazy" />
-      ) : (
-        <div className="thumb-placeholder">{character.name[0]?.toUpperCase()}</div>
-      )}
+    <Link
+      className="card"
+      to={`/character/${character.id}`}
+      // remember the list URL (filters, page) so "Back to list" can restore it
+      state={{ from: `${location.pathname}${location.search}` }}
+    >
+      <CharacterImage src={character.image} name={character.name} />
       <div className="card-body">
         <h3>{character.name}</h3>
         <p className="muted">
@@ -15,9 +21,9 @@ export default function CharacterCard({ character, onSelect }) {
           <span className={`badge badge-${character.status.toLowerCase()}`}>
             {character.status}
           </span>
-          <span className="muted">{character.episode.length} episodes</span>
+          <span className="muted">{character.episodeCount} episodes</span>
         </div>
       </div>
-    </button>
+    </Link>
   );
 }

@@ -1,27 +1,34 @@
-import { useEffect } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
+import CharacterImage from "./CharacterImage.jsx";
+import NotFound from "./NotFound.jsx";
 
-export default function CharacterDetail({ character, onClose }) {
-  // Close on Escape key
-  useEffect(() => {
-    function handleKeyDown(e) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown); // cleanup
-  }, [onClose]);
+// Detail page: /character/:id
+// `fallback` is shown instead of "not found" while the list is still loading (or failed).
+export default function CharacterDetail({ characters, fallback }) {
+  const { id } = useParams();
+  const location = useLocation();
+
+  const character = characters.find((c) => String(c.id) === id);
+
+  if (!character) {
+    return fallback ?? <NotFound message="Character not found." />;
+  }
+
+  const backTo = location.state?.from ?? "/";
 
   return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close">
-          ×
-        </button>
+    <article className="detail">
+      <CharacterImage
+        key={character.id}
+        src={character.image}
+        name={character.name}
+        className="detail-img"
+      />
 
-        {character.image ? (
-          <img className="modal-img" src={character.image} alt={character.name} />
-        ) : (
-          <div className="thumb-placeholder modal-img">{character.name[0]?.toUpperCase()}</div>
-        )}
+      <div className="detail-body">
+        <Link className="btn" to={backTo}>
+          ← Back to list
+        </Link>
 
         <h2>{character.name}</h2>
         <span className={`badge badge-${character.status.toLowerCase()}`}>
@@ -34,14 +41,10 @@ export default function CharacterDetail({ character, onClose }) {
           <li>Gender: {character.gender}</li>
           <li>Origin: {character.origin.name}</li>
           <li>Last known location: {character.location.name}</li>
-          <li>Episodes: {character.episode.length}</li>
+          <li>Episodes: {character.episodeCount}</li>
           <li>Added to database: {new Date(character.created).toLocaleDateString()}</li>
         </ul>
-
-        <button className="btn" onClick={onClose}>
-          Back to list
-        </button>
       </div>
-    </div>
+    </article>
   );
 }

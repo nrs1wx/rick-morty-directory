@@ -1,14 +1,18 @@
-export default function Header({ total, canAdd, showForm, onToggleForm }) {
+import { Link } from "react-router-dom";
+
+export default function Header({ total }) {
   return (
     <header className="header">
       <div className="container header-inner">
         <div>
-          <h1>Rick and Morty Characters</h1>
+          <h1>
+            <Link to="/">Rick and Morty Characters</Link>
+          </h1>
           <p className="muted">{total > 0 ? `${total} characters` : "Character directory"}</p>
         </div>
-        <button className="btn btn-primary" onClick={onToggleForm} disabled={!canAdd}>
-          {showForm ? "Close form" : "Add character"}
-        </button>
+        <Link className="btn btn-primary" to="/add">
+          Add character
+        </Link>
       </div>
     </header>
   );

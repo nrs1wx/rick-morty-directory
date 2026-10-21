@@ -29,12 +29,14 @@ h1, h2, h3, p { margin: 0; }
 /* Header */
 .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 0; margin-bottom: 20px; }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.header h1 { font-size: 1.5rem; color: var(--primary); }
+.header h1 { font-size: 1.5rem; }
+.header h1 a { color: var(--primary); text-decoration: none; }
 
-/* Buttons & inputs */
+/* Buttons & inputs (links with class "btn" look like buttons) */
 .btn {
-  padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px;
+  display: inline-block; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px;
   background: var(--surface); color: var(--text); font-size: 0.95rem; cursor: pointer;
+  text-decoration: none; text-align: center; font-family: inherit; line-height: 1.5;
 }
 .btn:hover:not(:disabled) { background: var(--surface-hover); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -61,8 +63,17 @@ input:focus, select:focus, textarea:focus, .btn:focus-visible, .card:focus-visib
   cursor: pointer; font: inherit; color: inherit;
 }
 .card:hover { border-color: var(--primary); }
+.card { text-decoration: none; }
 .card img, .thumb-placeholder { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: var(--surface-hover); }
 .thumb-placeholder { display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--muted); }
+
+/* Image with a loading skeleton */
+.img-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; background: var(--surface-hover); overflow: hidden; }
+.img-wrap img { display: block; height: 100%; opacity: 0; transition: opacity 0.3s; }
+.img-wrap img.loaded { opacity: 1; }
+.img-skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--surface-hover), var(--border), var(--surface-hover)); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .img-skeleton { animation: none; } .img-wrap img { transition: none; } }
 .card-body { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
 .card-body h3 { font-size: 1rem; }
 .card-row { display: flex; justify-content: space-between; align-items: center; }
@@ -93,18 +104,28 @@ input:focus, select:focus, textarea:focus, .btn:focus-visible, .card:focus-visib
 .form-actions { display: flex; gap: 10px; }
 .field-error { color: var(--danger); font-size: 0.85rem; font-weight: 400; }
 
-/* Modal */
-.overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
-.modal { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 460px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-.modal-img { width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px; }
-.modal-close { position: absolute; top: 10px; right: 14px; border: none; background: none; font-size: 1.8rem; cursor: pointer; color: var(--muted); }
+/* Photo field in the form */
+.photo-field { display: flex; flex-direction: column; gap: 8px; }
+.photo-field label { display: flex; flex-direction: column; gap: 4px; font-weight: 500; }
+.photo-preview { display: flex; align-items: center; gap: 12px; }
+.photo-preview img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
+/* Warning banner */
+.notice { background: var(--surface); border: 1px solid var(--danger); color: var(--danger); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
+
+/* Detail page */
+.detail { display: grid; grid-template-columns: minmax(0, 360px) 1fr; gap: 28px; align-items: start; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.detail-img { border-radius: 12px; overflow: hidden; }
+.detail-body { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 .details { margin: 0; padding-left: 18px; }
-.modal .btn { align-self: flex-start; }
 
 /* Responsive */
 @media (max-width: 900px) {
   .controls { grid-template-columns: 1fr 1fr 1fr; }
   .controls input[type="search"] { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .detail { grid-template-columns: 1fr; padding: 16px; }
 }
 @media (max-width: 560px) {
   .controls { grid-template-columns: 1fr 1fr; }

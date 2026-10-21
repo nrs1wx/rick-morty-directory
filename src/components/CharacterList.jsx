@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Controls from "./Controls.jsx";
 import CharacterCard from "./CharacterCard.jsx";
 import Pagination from "./Pagination.jsx";
@@ -6,29 +7,62 @@ import StatusMessage from "./StatusMessage.jsx";
 
 const PAGE_SIZE = 12;
 
-export default function CharacterList({ characters, speciesList, onSelect }) {
-  // Filter state lives here, not in App
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [species, setSpecies] = useState("all");
-  const [gender, setGender] = useState("all");
-  const [sortBy, setSortBy] = useState("default");
-  const [page, setPage] = useState(1);
+// Search, filters, sorting and the page number live in the URL (?q=rick&status=Alive&page=2),
+// so they survive a reload and the browser "Back" button from the detail page.
+export default function CharacterList({ characters, speciesList }) {
+  const [params, setParams] = useSearchParams();
 
-  // Debounce: update the real search term 300ms after the user stops typing
+  const query = params.get("q") ?? "";
+  const status = params.get("status") ?? "all";
+  const species = params.get("species") ?? "all";
+  const gender = params.get("gender") ?? "all";
+  const sortBy = params.get("sort") ?? "default";
+  const page = Math.max(1, Number(params.get("page")) || 1);
+
+  // The text in the search box changes on every key press; the URL only after a pause
+  const [searchInput, setSearchInput] = useState(query);
+
+  // Set several URL params at once. Default values are removed to keep the URL short.
+  const updateParams = useCallback(
+    (changes, { replace = true } = {}) => {
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [key, value] of Object.entries(changes)) {
+            const isDefault =
+              value === "" || value === "all" || value === "default" || (key === "page" && value === 1);
+            if (isDefault) next.delete(key);
+            else next.set(key, String(value));
+          }
+          return next;
+        },
+        { replace }
+      );
+    },
+    [setParams]
+  );
+
+  // When the URL changes from outside (Back / Forward / Reset), update the search box
   useEffect(() => {
+    setSearchInput(query);
+  }, [query]);
+
+  // Debounce: write the search text to the URL 300ms after the user stops typing
+  useEffect(() => {
+    const trimmed = searchInput.trim();
+    if (trimmed === query) return;
+
     const timerId = setTimeout(() => {
-      setDebouncedSearch(search.trim().toLowerCase());
-      setPage(1);
+      updateParams({ q: trimmed, page: 1 });
     }, 300);
     return () => clearTimeout(timerId); // cleanup: cancel the previous timer
-  }, [search]);
+  }, [searchInput, query, updateParams]);
 
   // Filter + sort ALL characters (recalculated only when a dependency changes)
   const visibleCharacters = useMemo(() => {
+    const needle = query.toLowerCase();
     const result = characters.filter((c) => {
-      const matchesSearch = c.name.toLowerCase().includes(debouncedSearch);
+      const matchesSearch = c.name.toLowerCase().includes(needle);
       const matchesStatus = status === "all" || c.status === status;
       const matchesSpecies = species === "all" || c.species === species;
       const matchesGender = gender === "all" || c.gender === gender;
@@ -44,13 +78,13 @@ export default function CharacterList({ characters, speciesList, onSelect }) {
         result.sort((a, b) => b.name.localeCompare(a.name));
         break;
       case "episodes-desc":
-        result.sort((a, b) => b.episode.length - a.episode.length);
+        result.sort((a, b) => b.episodeCount - a.episodeCount);
         break;
       default:
         break;
     }
     return result;
-  }, [characters, debouncedSearch, status, species, gender, sortBy]);
+  }, [characters, query, status, species, gender, sortBy]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(visibleCharacters.length / PAGE_SIZE));
@@ -61,46 +95,34 @@ export default function CharacterList({ characters, speciesList, onSelect }) {
   );
 
   // Every filter change goes back to page 1
-  function handleStatusChange(value) {
-    setStatus(value);
-    setPage(1);
+  function handleFilterChange(key, value) {
+    updateParams({ [key]: value, page: 1 });
   }
-  function handleSpeciesChange(value) {
-    setSpecies(value);
-    setPage(1);
+
+  function handlePageChange(newPage) {
+    updateParams({ page: newPage }, { replace: false }); // pages are real history entries
+    window.scrollTo({ top: 0 });
   }
-  function handleGenderChange(value) {
-    setGender(value);
-    setPage(1);
-  }
-  function handleSortChange(value) {
-    setSortBy(value);
-    setPage(1);
-  }
+
   function handleReset() {
-    setSearch("");
-    setDebouncedSearch("");
-    setStatus("all");
-    setSpecies("all");
-    setGender("all");
-    setSortBy("default");
-    setPage(1);
+    setSearchInput("");
+    setParams({}, { replace: true });
   }
 
   return (
     <section>
       <Controls
-        search={search}
-        onSearchChange={setSearch}
+        search={searchInput}
+        onSearchChange={setSearchInput}
         status={status}
-        onStatusChange={handleStatusChange}
+        onStatusChange={(value) => handleFilterChange("status", value)}
         species={species}
-        onSpeciesChange={handleSpeciesChange}
+        onSpeciesChange={(value) => handleFilterChange("species", value)}
         speciesList={speciesList}
         gender={gender}
-        onGenderChange={handleGenderChange}
+        onGenderChange={(value) => handleFilterChange("gender", value)}
         sortBy={sortBy}
-        onSortChange={handleSortChange}
+        onSortChange={(value) => handleFilterChange("sort", value)}
         onReset={handleReset}
       />
 
@@ -119,13 +141,13 @@ export default function CharacterList({ characters, speciesList, onSelect }) {
         <>
           <div className="grid">
             {pageItems.map((character) => (
-              <CharacterCard key={character.id} character={character} onSelect={onSelect} />
+              <CharacterCard key={character.id} character={character} />
             ))}
           </div>
           <Pagination
             page={currentPage}
             totalPages={totalPages}
-            onPageChange={setPage}
+            onPageChange={handlePageChange}
           />
         </>
       )}
